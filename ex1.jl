@@ -83,7 +83,7 @@ The download command, also requires that we specify a path and file name for whe
 begin
 	datadir = joinpath(pwd(),"data")
 	mkpath(datadir)
-	filename = "nexsci_ps.tsv"
+	filename = "nexsci_ps3.tsv"
 	datapath = joinpath(datadir,filename)
 end
 
@@ -455,26 +455,7 @@ Update your plot so it more effectively communicates the relationship between or
 # ╔═╡ 7230cce0-be6b-47b5-be8d-24ce39e338ff
 let  
 	# TODO: INSERT YOUR CODE FOR Q3B INTO THIS CELL
-	number_of_contour_levels = 10
-	bandwidth_x = 0.4
-	bandwidth_y = 0.02
-	plot_low_density_points = true
-	threshold_for_plotting_points = 2/ number_of_contour_levels
 	
-	mask = .!(ismissing.(df.pl_orbper) .|| ismissing.(df.pl_orbeccen))
-	x = log10.(collect(skipmissing(df[mask,:pl_orbper])))
-	y = collect(skipmissing(df[mask,:pl_orbeccen]))
-	kde_to_plt = kde((x,y), bandwidth=(bandwidth_x,bandwidth_y) )
-	plt = plot(kde_to_plt, levels=number_of_contour_levels)
-	xlabel!(plt,L"\log_{10} (\mathrm{Orbital Period}/d)")
-	ylabel!(plt,"Eccentricity")
-	
-	if plot_low_density_points
-		mask_outside_contours = calc_mask_points_outside_kde_contour(kde_to_plt, x, y, threshold_for_plotting_points )
-		
-		scatter!(plt, x[mask_outside_contours], y[mask_outside_contours], markersize=1, label=:none)
-	end
-	plt
 end
 
 # ╔═╡ 8cad78a1-757a-4722-ab92-a11c6affa27c

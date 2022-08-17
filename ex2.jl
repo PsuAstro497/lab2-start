@@ -261,10 +261,9 @@ md"""
 
 # ╔═╡ 96c3ce9a-263c-420f-a252-cbc406420cc1
 let
-	# INSERT YOUR CODE HERE
-	plt = plot(xlabel="Eccentricity", ylabel=L"Count")
-	histogram!(plt,collect(skipmissing((df_transit.pl_orbeccen))), alpha=0.5, normalize=true, label="Transit")
-	histogram!(plt,collect(skipmissing((df_rv.pl_orbeccen))), alpha=0.5, normalize=true, label="RV")
+	plt = plot(xlabel="Eccentricity", ylabel="Count")
+	# TODO: INSERT YOUR CODE HERE
+	
 end
 
 # ╔═╡ 84b592c1-2d87-4e78-ac91-3d84361d5f37
@@ -318,7 +317,7 @@ Before you start working on this, check the time.  If you're still working after
 """)
 
 # ╔═╡ 483a7db4-ecca-400f-9685-cc4e99eecc6a
-# INSERT YOUR CODE HERE
+# TODO: INSERT YOUR CODE HERE
 
 # ╔═╡ 4b134b4f-a81b-49e6-964d-dcad2aa93c0b
 md"""
@@ -328,24 +327,6 @@ Explain your improved understanding.
 
 # ╔═╡ cd1a1b7c-920e-42bd-a95c-c34c248e18c2
 response_3d = missing
-
-# ╔═╡ 8974de75-c3a5-45d4-aad9-4d0212f98c7e
-# Examples of plots they might make
-# TODO Remove before publishing
-
-# ╔═╡ e6541517-48c6-40f1-8f7f-f8007bb4198f
-let
-	plt = plot(xlabel=L"Period ($d$)", ylabel = L"Radius ($R_\oplus$)", xscale=:log10, yscale=:log10)
-	scatter!(plt,df_transit.pl_orbper,df_transit.pl_rade, markersize=2, alpha=0.5, markercolor=:red, label="Transits")
-	scatter!(plt,df_rv.pl_orbper,df_rv.pl_rade, markersize=3, markercolor=:blue, alpha=0.8, label="RV")
-end
-
-# ╔═╡ 22d4ac43-524c-4b56-b509-e8350ef6f225
-let
-	plt = plot(xlabel=L"Period ($d$)", ylabel = L"Mass ($M_\oplus$)", xscale=:log10, yscale=:log10)
-	scatter!(plt,df_transit.pl_orbper,df_transit.pl_masse, markersize=3, markercolor=:red, label="Transits")
-	scatter!(plt,df_rv.pl_orbper,df_rv.pl_masse, markersize=3, markercolor=:blue, label="RV")
-end
 
 # ╔═╡ 9d11daed-54ec-41a7-8814-483189b9d93a
 md"# Setup, UI & Helper Code"
@@ -359,7 +340,7 @@ nbsp = html"&nbsp;"
 # ╔═╡ be1b6155-27ae-4d76-8be4-f24f7acb4c6c
 md"""
 **Astro 497 Week 2, Exercise 2**
-# Exploratory Data Analysis:  $nbsp Disaggregate Data
+# Exploratory Data Analysis: $nbsp Disaggregate Data
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1720,9 +1701,6 @@ version = "1.4.1+0"
 # ╠═483a7db4-ecca-400f-9685-cc4e99eecc6a
 # ╟─4b134b4f-a81b-49e6-964d-dcad2aa93c0b
 # ╠═cd1a1b7c-920e-42bd-a95c-c34c248e18c2
-# ╠═8974de75-c3a5-45d4-aad9-4d0212f98c7e
-# ╠═e6541517-48c6-40f1-8f7f-f8007bb4198f
-# ╠═22d4ac43-524c-4b56-b509-e8350ef6f225
 # ╟─9d11daed-54ec-41a7-8814-483189b9d93a
 # ╠═7f83555e-edd1-4db5-95e6-1aededd18162
 # ╠═2e57ec5e-15f3-46a4-948c-c098ee968909
