@@ -370,7 +370,7 @@ end
 
 # ╔═╡ bb0ef326-23f6-462b-a1ad-808f7d08caed
 md"""
-**Q2e:** What is one advantage and disadvantage of each of these ways of visualizing the distribution of measured $s \sin i$'s?
+**Q2e:** What is one advantage and disadvantage of each of these ways of visualizing the distribution of measured $m \sin i$'s?
 """
 
 # ╔═╡ eaf15a79-6ca9-4b0f-bded-3e37cff728ed
@@ -1813,7 +1813,7 @@ version = "1.4.1+0"
 # ╠═8f9c3263-3baf-4ee9-a9e1-1c00b0b3450e
 # ╟─aa2ec80c-5170-43f3-947b-0732d2f27445
 # ╠═4b906e4d-4685-4e74-9659-9f4aa621df56
-# ╠═1933369e-a441-4ccd-8ae2-114224fce43d
+# ╟─1933369e-a441-4ccd-8ae2-114224fce43d
 # ╟─bd7ad17d-4f7e-4ced-a4ba-c82d50b69b7f
 # ╠═922fc8e1-d8c8-4cae-91f1-98616e1b515f
 # ╟─8bd90bb3-80ca-41c5-851e-0586e6f12878
