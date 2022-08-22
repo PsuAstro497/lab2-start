@@ -4,7 +4,7 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 7f83555e-edd1-4db5-95e6-1aededd18162
+# ╔═╡ 1193dfac-29ca-4e64-a29c-920a3b04482b
 begin
 	using Downloads
 	using CSV, DataFrames
@@ -12,13 +12,13 @@ begin
 	using PlutoUI, PlutoTeachingTools, PlutoTest, HypertextLiteral
 	using Plots.PlotMeasures
 	using KernelDensity
-	# The new few packages are not used in the starter notebook.
+	# The next few packages are not used in the starter notebook.
 	# You can uncomment them, if you want to reuse a function from ex1.
 	# using StatsBase, Statistics, KernelDensity, PairPlots
-	# Uses some code in a module in the lab2 repository
-	M = @ingredients("src/Lab2.jl")
-	import .M.Lab2: make_tap_query_url, calc_mask_points_outside_kde_contour
 end
+
+# ╔═╡ 2e57ec5e-15f3-46a4-948c-c098ee968909
+TableOfContents()
 
 # ╔═╡ c9b03ce0-257e-4ab6-9839-29c317477599
 md"""
@@ -27,51 +27,12 @@ First, we need to reload the same data that we used in the first exercise of thi
 You can skip to the [next section](#ea31d5c1-e93d-4a7c-84c4-95769babba48).
 """
 
-# ╔═╡ 4be2fe02-bc08-47bd-a852-9c0d64a23c95
-begin
-	query_base_url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query="
-	query_table = "ps"
-	query_where = "default_flag=1"
-	query_max_rows = 10_000
-	url_to_use = make_tap_query_url(query_base_url, query_table, where=query_where, max_rows=query_max_rows)
-end;
-
 # ╔═╡ d09ba598-cd6d-40a5-9052-a7b44429ddb5
 begin
 	datadir = joinpath(pwd(),"data")
 	mkpath(datadir)
 	filename = "nexsci_ps.tsv"
 	datapath = joinpath(datadir,filename)
-end;
-
-# ╔═╡ 5388ed2b-0ada-46a5-aa3f-9da522a747c2
-begin
-	if !isfile(datapath) || filesize(datapath)==0
-		Downloads.download(url_to_use, datapath)
-		fresh_data = true
-	else
-		fresh_data = false
-	end
-	@test filesize(datapath) >0
-end
-
-# ╔═╡ 5dbf2319-668f-460d-8bf6-f66a5c0c64eb
-begin
-	fresh_data
-	df_raw = CSV.read(datapath,DataFrame)
-end;
-
-# ╔═╡ ffdb5655-d778-4d71-9ec5-8805edcb0c55
-begin
-	# Create new Dataframe that eliminates columns that have names ending in "str"
-	colnames_ending_in_str = filter(x->contains(x,r"str$"), names(df_raw) )
-	df = select(df_raw,Not(Symbol.(colnames_ending_in_str)))
-
-	# Convert columns containing HTML into HTML
-	df.sy_refname = HTML.(df.sy_refname)
-	df.disc_refname = HTML.(df.disc_refname)
-	df.pl_refname = HTML.(df.pl_refname)
-	df
 end;
 
 # ╔═╡ ea31d5c1-e93d-4a7c-84c4-95769babba48
@@ -84,19 +45,10 @@ For example, we could inspect exoplanets based on their discovery method.
 Let's check what values of are present in the column `:discoverymethod`.
 """
 
-# ╔═╡ 71368e46-f103-48ed-a8b1-8633a0edd799
-unique(df.discoverymethod)
-
 # ╔═╡ eedc4661-88c7-4e42-850f-753308bb4073
 md"""
 Now, we'll use the `groupby` function to return a collection of `GroupedDataFrames` each with just one value of `:discoverymethod`.
 """
-
-# ╔═╡ 06706ff9-4843-40ea-b14b-d647f7b65f63
-df_by_method = groupby(df,:discoverymethod)
-
-# ╔═╡ cc723d2b-a34b-4842-bd80-25953222614d
-summary(df_by_method)
 
 # ╔═╡ 48cfbefb-11e1-4a6e-ad9a-53b7d8363513
 md"""
@@ -105,32 +57,15 @@ We can access the resulted `GroupedDataFrame`'s using many different notations, 
 We could check how many rows are in the GroupedDataFrame for a given method using
 """
 
-# ╔═╡ 5963ab47-20af-47c5-9cd7-e136fdee082b
-nrow( df_by_method[(discoverymethod="Radial Velocity",)] )
-
 # ╔═╡ 86b838ff-3bc4-4b22-be0f-41fa919de8b8
 md"""
 Or we could create another DataFrame containing the number of rows for each discovery method using `combine`.
 """
 
-# ╔═╡ 186211b7-3718-4081-9c83-f7d3ff0c8e53
-begin
-	df_by_method_summary = combine(df_by_method,nrow)
-	sort!(df_by_method_summary,:nrow, rev=true)
-end
-
 # ╔═╡ e2a7bc6a-427f-41ef-a70a-e3c09a45d171
 md"""
 We can use this DataFrame to plot a histogram of the number of detections by discovery method.
 """
-
-# ╔═╡ aeb9a95e-08ee-4759-b98b-e56f4aa3bfed
-let
-	plt = plot(xrotation = 60, legend=:none, bottommargin=10mm)
-	bar!(plt, df_by_method_summary.discoverymethod,df_by_method_summary.nrow, xrotation=60)
-	ylabel!(plt,"Number of Planets")
-	title!(plt,"Discovery method")
-end
 
 # ╔═╡ fbdbbbf2-27e9-4003-8625-fe610f90230a
 md"""
@@ -145,14 +80,6 @@ md"""
 We'll create a few convenience variables to use as a shorthand for accessing the grouped tables for planets discovered by a few of the discovery methods.
 """
 
-# ╔═╡ d5fc9510-a232-4341-b109-eb6999ffb807
-begin
-	df_imaging = get(df_by_method,(discoverymethod="Imaging",),nothing)
-	df_microlens = get(df_by_method,(discoverymethod="Microlensing",),nothing)
-	df_rv = get(df_by_method,(discoverymethod="Radial Velocity",),nothing)
-	df_transit = get(df_by_method,(discoverymethod="Transit",),nothing)
-end;
-
 # ╔═╡ e9d934c5-dc93-4c29-8925-fb8c68bfe79a
 md"""
 Inspect the summary tables below, paying attention to what fraction of the time there is missing data for each of the selected columns for planets discovered via each method.
@@ -160,15 +87,6 @@ Inspect the summary tables below, paying attention to what fraction of the time 
 
 # ╔═╡ 38977035-5265-41f9-aae0-7a985123f0eb
 cols_to_summarize = [:disc_year,:pl_orbper,:pl_rvamp, :pl_orbeccen,:pl_masse,:pl_rade,:pl_dens];
-
-# ╔═╡ b962e210-dc1b-4a6d-a00c-8c2f85df9f5b
-describe(df_rv, cols=cols_to_summarize)
-
-# ╔═╡ f0d87a50-302a-42bb-bc8a-50cffe382bfe
-describe(df_transit, cols=cols_to_summarize)
-
-# ╔═╡ 05660a8d-7201-4b3d-a6b6-a18ec06fadf6
-describe(df_imaging, cols=cols_to_summarize)
 
 # ╔═╡ 184c2e6a-3f95-4b6f-9d97-6d050e5445a0
 md"""
@@ -221,15 +139,6 @@ md"""
 Now, let's compare the histograms of a few variables, disaggregated by discovery method.  First, we'll look at the orbital period.
 """
 
-# ╔═╡ 24b4163c-cdab-4d99-8038-57f9dcd3470e
-let
-	plt = plot(xlabel=L"\log_{10}(P/d)", ylabel=L"Count")
-	histogram!(plt,collect(skipmissing(log10.(df_rv.pl_orbper))), alpha=0.5, normalize=true, label="RV")
-	histogram!(plt,collect(skipmissing(log10.(df_transit.pl_orbper))), alpha=0.5, normalize=true, label="Transit")
-	histogram!(plt,collect(skipmissing(log10.(df_imaging.pl_orbper))), alpha=0.5, normalize=true, label="Imaging")
-	histogram!(plt,collect(skipmissing(log10.(df_microlens.pl_orbper))), alpha=0.5, normalize=true, label="Microlensing")
-end
-
 # ╔═╡ bd326e40-f723-44a9-b9c5-625d2131fe95
 md"""
 **Q2a:**  What explains why the observed distribution of orbital periods differs depending on the discovery method?
@@ -280,13 +189,6 @@ md"""
 Now, consider a plot of orbital period versus eccentricty for planets discovered by transits or radial velocities, separately.
 """
 
-# ╔═╡ 57dea9d7-8acf-4422-8b46-202ca737121f
-let
-	plt = plot(xlabel="Period (d)", ylabel = "Eccentricity", xscale=:log10, legend=:topleft)
-	scatter!(plt,df_transit.pl_orbper,df_transit.pl_orbeccen, markersize=2, markerstrokewidth=0, label="Transit")
-	scatter!(plt,df_rv.pl_orbper,df_rv.pl_orbeccen, markersize=2, markerstrokewidth=0, label="RV")
-end
-
 # ╔═╡ 00f78dd3-00d5-4055-aac6-8304268422a2
 md"""
 **Q3a:**  Does this plot provide any additional insights into the likely cause for differences in the eccentricity distribution seen above?  If so, explain your updated thinking based on this plot?
@@ -334,8 +236,109 @@ md"# Setup, UI & Helper Code"
 # ╔═╡ b3763704-2b76-4187-ba62-b0b51c6c3f4e
 ChooseDisplayMode()
 
-# ╔═╡ 2e57ec5e-15f3-46a4-948c-c098ee968909
-TableOfContents()
+# ╔═╡ d8ebfea1-1d97-4280-830d-008c7dda53b7
+begin # This lab uses some code in a module in the lab2 repository
+	M = @ingredients("src/Lab2.jl")
+	import .M.Lab2: make_tap_query_url, calc_mask_points_outside_kde_contour
+end
+
+# ╔═╡ 4be2fe02-bc08-47bd-a852-9c0d64a23c95
+begin
+	query_base_url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query="
+	query_table = "ps"
+	query_where = "default_flag=1"
+	query_max_rows = 10_000
+	url_to_use = make_tap_query_url(query_base_url, query_table, where=query_where, max_rows=query_max_rows)
+end;
+
+# ╔═╡ 5388ed2b-0ada-46a5-aa3f-9da522a747c2
+begin
+	if !isfile(datapath) || filesize(datapath)==0
+		Downloads.download(url_to_use, datapath)
+		fresh_data = true
+	else
+		fresh_data = false
+	end
+	@test filesize(datapath) >0
+end
+
+# ╔═╡ 5dbf2319-668f-460d-8bf6-f66a5c0c64eb
+begin
+	fresh_data
+	df_raw = CSV.read(datapath,DataFrame)
+end;
+
+# ╔═╡ ffdb5655-d778-4d71-9ec5-8805edcb0c55
+begin
+	# Create new Dataframe that eliminates columns that have names ending in "str"
+	colnames_ending_in_str = filter(x->contains(x,r"str$"), names(df_raw) )
+	df = select(df_raw,Not(Symbol.(colnames_ending_in_str)))
+
+	# Convert columns containing HTML into HTML
+	df.sy_refname = HTML.(df.sy_refname)
+	df.disc_refname = HTML.(df.disc_refname)
+	df.pl_refname = HTML.(df.pl_refname)
+	df
+end;
+
+# ╔═╡ 71368e46-f103-48ed-a8b1-8633a0edd799
+unique(df.discoverymethod)
+
+# ╔═╡ 06706ff9-4843-40ea-b14b-d647f7b65f63
+df_by_method = groupby(df,:discoverymethod)
+
+# ╔═╡ cc723d2b-a34b-4842-bd80-25953222614d
+summary(df_by_method)
+
+# ╔═╡ 5963ab47-20af-47c5-9cd7-e136fdee082b
+nrow( df_by_method[(discoverymethod="Radial Velocity",)] )
+
+# ╔═╡ 186211b7-3718-4081-9c83-f7d3ff0c8e53
+begin
+	df_by_method_summary = combine(df_by_method,nrow)
+	sort!(df_by_method_summary,:nrow, rev=true)
+end
+
+# ╔═╡ aeb9a95e-08ee-4759-b98b-e56f4aa3bfed
+let
+	plt = plot(xrotation = 60, legend=:none, bottommargin=10mm)
+	bar!(plt, df_by_method_summary.discoverymethod,df_by_method_summary.nrow, xrotation=60)
+	ylabel!(plt,"Number of Planets")
+	title!(plt,"Discovery method")
+end
+
+# ╔═╡ d5fc9510-a232-4341-b109-eb6999ffb807
+begin
+	df_imaging = get(df_by_method,(discoverymethod="Imaging",),nothing)
+	df_microlens = get(df_by_method,(discoverymethod="Microlensing",),nothing)
+	df_rv = get(df_by_method,(discoverymethod="Radial Velocity",),nothing)
+	df_transit = get(df_by_method,(discoverymethod="Transit",),nothing)
+end;
+
+# ╔═╡ b962e210-dc1b-4a6d-a00c-8c2f85df9f5b
+describe(df_rv, cols=cols_to_summarize)
+
+# ╔═╡ f0d87a50-302a-42bb-bc8a-50cffe382bfe
+describe(df_transit, cols=cols_to_summarize)
+
+# ╔═╡ 05660a8d-7201-4b3d-a6b6-a18ec06fadf6
+describe(df_imaging, cols=cols_to_summarize)
+
+# ╔═╡ 24b4163c-cdab-4d99-8038-57f9dcd3470e
+let
+	plt = plot(xlabel=L"\log_{10}(P/d)", ylabel=L"Count")
+	histogram!(plt,collect(skipmissing(log10.(df_rv.pl_orbper))), alpha=0.5, normalize=true, label="RV")
+	histogram!(plt,collect(skipmissing(log10.(df_transit.pl_orbper))), alpha=0.5, normalize=true, label="Transit")
+	histogram!(plt,collect(skipmissing(log10.(df_imaging.pl_orbper))), alpha=0.5, normalize=true, label="Imaging")
+	histogram!(plt,collect(skipmissing(log10.(df_microlens.pl_orbper))), alpha=0.5, normalize=true, label="Microlensing")
+end
+
+# ╔═╡ 57dea9d7-8acf-4422-8b46-202ca737121f
+let
+	plt = plot(xlabel="Period (d)", ylabel = "Eccentricity", xscale=:log10, legend=:topleft)
+	scatter!(plt,df_transit.pl_orbper,df_transit.pl_orbeccen, markersize=2, markerstrokewidth=0.1, label="Transit")
+	scatter!(plt,df_rv.pl_orbper,df_rv.pl_orbeccen, markersize=2, markerstrokewidth=0.1, label="RV")
+end
 
 # ╔═╡ f6ba230a-6e4d-414c-b828-0bf0311013b2
 nbsp = html"&nbsp;"
@@ -370,7 +373,7 @@ HypertextLiteral = "~0.9.4"
 KernelDensity = "~0.6.5"
 LaTeXStrings = "~1.3.0"
 Plots = "~1.31.7"
-PlutoTeachingTools = "~0.1.5"
+PlutoTeachingTools = "~0.1.7"
 PlutoTest = "~0.2.2"
 PlutoUI = "~0.7.39"
 StatsPlots = "~0.15.1"
@@ -1158,10 +1161,10 @@ uuid = "0ff47ea0-7a50-410d-8455-4348d5de0420"
 version = "0.1.5"
 
 [[deps.PlutoTeachingTools]]
-deps = ["HypertextLiteral", "LaTeXStrings", "Markdown", "PlutoLinks", "PlutoUI", "Random"]
-git-tree-sha1 = "7aa8eef291dbb46aba4aab7fc3895d540a4725d8"
+deps = ["Downloads", "HypertextLiteral", "LaTeXStrings", "Latexify", "Markdown", "PlutoLinks", "PlutoUI", "Random"]
+git-tree-sha1 = "67c917d383c783aeadd25babad6625b834294b30"
 uuid = "661c6b06-c737-4d37-b85c-46df65de6f69"
-version = "0.1.5"
+version = "0.1.7"
 
 [[deps.PlutoTest]]
 deps = ["HypertextLiteral", "InteractiveUtils", "Markdown", "Test"]
@@ -1681,6 +1684,7 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╟─be1b6155-27ae-4d76-8be4-f24f7acb4c6c
+# ╟─2e57ec5e-15f3-46a4-948c-c098ee968909
 # ╟─c9b03ce0-257e-4ab6-9839-29c317477599
 # ╠═4be2fe02-bc08-47bd-a852-9c0d64a23c95
 # ╠═d09ba598-cd6d-40a5-9052-a7b44429ddb5
@@ -1745,8 +1749,8 @@ version = "1.4.1+0"
 # ╠═cd1a1b7c-920e-42bd-a95c-c34c248e18c2
 # ╟─9d11daed-54ec-41a7-8814-483189b9d93a
 # ╠═b3763704-2b76-4187-ba62-b0b51c6c3f4e
-# ╠═7f83555e-edd1-4db5-95e6-1aededd18162
-# ╠═2e57ec5e-15f3-46a4-948c-c098ee968909
+# ╠═1193dfac-29ca-4e64-a29c-920a3b04482b
+# ╠═d8ebfea1-1d97-4280-830d-008c7dda53b7
 # ╟─f6ba230a-6e4d-414c-b828-0bf0311013b2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

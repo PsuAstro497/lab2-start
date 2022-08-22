@@ -25,5 +25,5 @@ Students will strengthen their understanding of the:
 ## Logistics
 Follow the link provided via Canvas to create your own private copy of this lab's repository on GitHub.com.   
 See the
-[help on the course website](https://psuastro497.github.io/fall2022/resources/labs/) for instructions on getting setup to use ACI, cloning, commiting, pushing and submiting your work.
+[help on the course website](https://psuastro497.github.io/fall2022/resources/labs/) for instructions on getting setup to use Roar, cloning, commiting, pushing and submiting your work.
 
