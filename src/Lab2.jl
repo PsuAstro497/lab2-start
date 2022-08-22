@@ -2,6 +2,11 @@ module Lab2
 
 using DataFrames, KernelDensity
 
+# Functions to be exported for use in lab
+export make_tap_query_url
+export get_cols_containing_string, get_cols_containing_real
+export calc_mask_points_outside_kde_contour
+
 "Returns a vector of strings with names of columns in DataFrame containing a variable of type."
 
 function get_cols_containing_type(df::DataFrame, type::Type)

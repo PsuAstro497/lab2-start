@@ -11,10 +11,6 @@ begin
 	using Plots, LaTeXStrings, StatsPlots, ColorSchemes
 	using PlutoUI, PlutoTeachingTools, PlutoTest, HypertextLiteral
 	using StatsBase, Statistics, KernelDensity
-
-	# Uses some code in a module in the lab2 repository
-	M = @ingredients("src/Lab2.jl")
-	import .M.Lab2: make_tap_query_url, get_cols_containing_string, get_cols_containing_real, calc_mask_points_outside_kde_contour
 end
 
 # ╔═╡ be1b6155-27ae-4d76-8be4-f24f7acb4c6c
@@ -49,13 +45,6 @@ If we just wanted to download every column and every row from the *table* named 
 I've provided a simple function, `make_tap_query_url` in `src/Lab2.jl` that makes it a little easier to build queries by specifying a base url and the table name (with the option to add a few commands that you'll see soon). 
 """
 
-# ╔═╡ 4be2fe02-bc08-47bd-a852-9c0d64a23c95
-begin 
-	query_base_url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query="
-	query_table = "ps"
-	url_to_download_all_data = make_tap_query_url(query_base_url,query_table)
-end
-
 # ╔═╡ 0d45aa80-de74-4805-b38f-571007a31e0f
 md"""
 TAP allows you to perform complex queries that restrict which data is downloaded.
@@ -63,13 +52,6 @@ The Exoplanet archive provides a [quick summary of how to build TAP query comman
 In this case, we'll ask for only rows for which the variable `default_flag` equals 1.
 And to make sure we don't accidentally download more than I intend, we'll specify a maximum number of rows.
 """
-
-# ╔═╡ 1d05aba8-d1e4-40d9-91d0-10a1fbdf4e75
-begin
-	query_where = "default_flag=1"
-	query_max_rows = 10_000
-	url_to_use = make_tap_query_url(query_base_url, query_table, where=query_where, max_rows=query_max_rows)
-end
 
 # ╔═╡ df4df681-4a70-4880-a476-600aa5a0c3ba
 md"""
@@ -87,17 +69,6 @@ begin
 	datapath = joinpath(datadir,filename)
 end
 
-# ╔═╡ 5388ed2b-0ada-46a5-aa3f-9da522a747c2
-begin
-	if !isfile(datapath) || filesize(datapath)==0
-		Downloads.download(url_to_use, datapath)
-		fresh_data = true
-	else
-		fresh_data = false
-	end
-	@test filesize(datapath) >0	
-end
-
 # ╔═╡ 2f6ae7d3-5ba7-4afe-8c95-c29b14bca422
 md"""
 Since internet queries might not succeed (e.g., what if your internet connection is down), we included a `@test` to give us a green light if the test passes or a red light if the test fails.
@@ -108,12 +79,6 @@ We'll specify that the data is to be stored in a [`DataFrame`](https://juliadata
 Pluto will display some of the resulting DataFrame, so we make sure it's what we expect.
 """
 
-# ╔═╡ 5dbf2319-668f-460d-8bf6-f66a5c0c64eb
-begin
-	fresh_data
-	df_raw = CSV.read(datapath,DataFrame)
-end
-
 # ╔═╡ fd759f39-08be-4a95-b866-affc94229e83
 md"""
 # Step 2: Validate & clean the data
@@ -121,9 +86,6 @@ Before we start trying to analyze the data, we need to make sure that the file w
 One of the most basic checks we can do is to look at some summary statistics for each column.  
 The `describe` function makes automates this for us.
 """
-
-# ╔═╡ 5a5fed8b-84b1-46ea-8e6c-cb18e0c40a8b
-describe(df_raw)
 
 # ╔═╡ 3d1862fe-0fa5-4814-aa12-aeb4a345c97c
 md"""
@@ -136,9 +98,6 @@ md"""
 When this lab was creatd, the query resulted in 5069 rows.  It's a little harder to see how many columns there are.  We can use the `ncol` command to check.
 """
 
-# ╔═╡ de7a6cf0-a096-45ca-b11d-da38dd6ffe34
-ncol(df_raw)
-
 # ╔═╡ bc8103e9-70e9-4700-8f8c-bca154b909dd
 md"""
 Wow, that's a lot of columns.
@@ -148,9 +107,6 @@ I've provided some helper functions (`get_cols_containing_string` and `get_cols_
 (You can refer to that code later if it would be helpful, but you don't need to be distracted by the syntax now.)
 Then, we can call `describe` specifying which columns we'd like it to focus on and which summary statistics we'd like it to compute for each subset of columns.
 """
-
-# ╔═╡ 927a5200-0e40-4bab-b868-c0da64ca9f30
-describe(df_raw, cols=get_cols_containing_real(df_raw) )
 
 # ╔═╡ 5f0cee0f-c407-4a22-8585-536246eb064d
 md"""
@@ -181,9 +137,6 @@ response_1c = missing # Replace missing with a string containing one or two sent
 md"""
 Now, we'll check out the columns containing some kind of string.
 """
-
-# ╔═╡ 95883e0a-7a7e-4171-a4bf-ac86619d5abe
-describe(df_raw, :first, :last, :nmissing, :nunique, cols=get_cols_containing_string(df_raw) )
 
 # ╔═╡ 31164c4b-4e2d-4f51-aca1-b2bf8b62c573
 md"""
@@ -226,14 +179,6 @@ For example, if we were to try to convert the data in `pl_pubdate` into proper `
 The following cell finds the problematic entry.
 """
 
-# ╔═╡ 37b74f19-b8e1-441e-bd4f-703a446103ee
-begin 
-	valid_year(x) = 1900 <= x <= 2100
-	valid_month(x) = 1 <= x <= 12
-	rows_with_invalid_month = findall(map(d->!valid_year(parse(Int,d[1:4])) || !valid_month(parse(Int,d[6:7])),df_raw.pl_pubdate))
-	df_raw.pl_pubdate[rows_with_invalid_month]
-end
-
 # ╔═╡ d073394c-1f53-4301-860e-7161889952f8
 md"""
 Cleaning up a dataset in a scientifically responsible way can require a significant amount of time from a domain expert.
@@ -241,34 +186,12 @@ For now, we'll just skip that time-consuming step and focus on columns with nume
 But I'll demonstrate a few conversions and remove some of the columns (those containing strings that duplicate information in numeric fields), so you can refer to that in the future.
 """
 
-# ╔═╡ ffdb5655-d778-4d71-9ec5-8805edcb0c55
-begin 
-	# Create new Dataframe that eliminates columns that have names ending in "str" 
-	colnames_ending_in_str = filter(x->contains(x,r"str$"), names(df_raw) )
-	df = select(df_raw,Not(Symbol.(colnames_ending_in_str)))
-	
-	# Convert columns containing HTML into HTML
-	df.sy_refname = HTML.(df.sy_refname)
-	df.disc_refname = HTML.(df.disc_refname)
-	df.pl_refname = HTML.(df.pl_refname)
-	df
-end
-
-# ╔═╡ d6eeb880-db23-4412-a2fd-232627088ea2
-HTML(df.pl_refname[1])
-
 # ╔═╡ d15c2f55-3bf4-4360-b116-3e0eda3e6e33
 md"""
 # Step 3: Visualize 1 column of data 
 Next, we'll pick a few variables to inspect a little more carefully.
 Let's start with the year of discovery, orbital period (in days), eccentricity, planet mass (in Earth masses), radius (in Earth radii), and density (in g/cm$^3$).
 """
-
-# ╔═╡ 0589b771-04b3-4b1a-949f-8daf99c9d616
-begin
-	cols_to_summarize = [:disc_year,:pl_orbper,:pl_rvamp, :pl_orbeccen,:pl_masse,:pl_rade,:pl_dens]
-	describe(df,cols=cols_to_summarize)
-end
 
 # ╔═╡ 9dc0c691-a8aa-4291-8df7-37402ed56e7d
 md"""
@@ -284,9 +207,6 @@ Now, we'll make histograms to help visualize the data in some of the columns.
 For example, we could look at the histogram of the year each planet was discovered.
 """
 
-# ╔═╡ 8f9c3263-3baf-4ee9-a9e1-1c00b0b3450e
-histogram(df.disc_year, xlabel="Year", ylabel="Number", legend=:none)
-
 # ╔═╡ aa2ec80c-5170-43f3-947b-0732d2f27445
 md"""
 **Q2b:** What do you think could explain the big spikes in 2015 and 2017?
@@ -294,12 +214,6 @@ md"""
 
 # ╔═╡ 4b906e4d-4685-4e74-9659-9f4aa621df56
 response_2b = missing
-
-# ╔═╡ 1933369e-a441-4ccd-8ae2-114224fce43d
-md"""
-As another example, we could plot a histogram of the mass of the planet times the sine of the inclination of its orbit relative to the sky plane.  
-The values vary over a large range ($(extrema(skipmissing(df.pl_msinie)))), so it's useful to take their logarithm before plotting.
-"""
 
 # ╔═╡ bd7ad17d-4f7e-4ced-a4ba-c82d50b69b7f
 md"""
@@ -326,17 +240,6 @@ I want to understand better how you're thinking through these issues.
 You'll get full credit if you make a plausible but incorrect prediction and later correct yourself.  """)
 
 
-# ╔═╡ 2f4b3656-066f-466f-a8ba-c6f2d20d2d32
-if !ismissing(response_2c) 
-	let
-	number_of_bins = 5
-	vals = collect(skipmissing(log10.(df.pl_msinie)))
-	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="Count", legend=:none)
-	histogram!(plt, vals, nbins=number_of_bins)
-	xlims!(-1,5)
-	end
-end
-
 # ╔═╡ ed15f972-aa39-4f55-82df-bec3e909c41b
 md"""
 As originally coded, the plot probably isn't particularly informative because there are so few bins.  
@@ -352,21 +255,6 @@ response_2d = missing
 md"""
 When one has lots of points, sometimes it's useful to plot an estimate of the  density of points (using a [kernel density estimator](https://en.wikipedia.org/wiki/Kernel_density_estimation) that you'll learn about in a statistics class) or to plot the [empirical cumulative distribution function](https://juliastats.org/StatsBase.jl/stable/empirical/#StatsBase.ecdf).
 """
-
-# ╔═╡ 68ee5d0c-613b-4cb1-923b-98aba36e26df
-let
-	vals = collect(skipmissing(log10.(df.pl_msinie)))
-	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="Count", legend=:none)
-	density!(plt, vals)
-	xlims!(-1,5)
-end
-
-# ╔═╡ b0dfadf6-eba5-447d-b5f6-1e8966d6835a
-let
-	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="CDF" )
-	plot!(plt,ecdf(log10.(skipmissing(df.pl_msinie))), label=:none)
-	xlims!(-1,5)
-end
 
 # ╔═╡ bb0ef326-23f6-462b-a1ad-808f7d08caed
 md"""
@@ -395,41 +283,10 @@ Here we'll focus on performing a visual inspection of possible correlations.
 For example, we could plot the year of discovery and the mass (times the sine of the orbital inclination) for known exoplanets.
 """
 
-# ╔═╡ aaeff910-09a4-47ad-97b9-b8c9e5311449
-let
-	mask = .!(ismissing.(df.disc_year) .|| ismissing.(df.pl_msinie))
-	plt = plot(xlabel="Discovery Year", ylabel="m sin i (M_⊕)", yscale=:log10, legend=:none)
-	scatter!(plt,df[mask,:disc_year],df[mask,:pl_msinie])
-end
-
 # ╔═╡ 8934a700-e7d0-455d-9b3a-5f506e6ebaad
 md"""
 One common source of confusion is overlapping points.  Again, it can be useful to look at an estimate for the density in 2-dimensions.  For that, we'll explicitly compute a kernel density estimate in 2-d and then plot it.
 """
-
-# ╔═╡ 673effd7-03e5-4bca-af5e-49e39aec14f4
-let
-	number_of_contour_levels = 10
-	bandwidth_x = 1
-	bandwidth_y = 0.3
-	plot_low_density_points = true
-	threshold_for_plotting_points = 2/number_of_contour_levels
-	
-	mask = .!(ismissing.(df.disc_year) .|| ismissing.(df.pl_msinie))
-	x = collect(skipmissing(df[mask,:disc_year]))
-	y = log10.(collect(skipmissing(df[mask,:pl_msinie])))
-	kde_to_plt = kde((x,y), bandwidth=(bandwidth_x, bandwidth_y) )
-	plt = plot(kde_to_plt, levels=number_of_contour_levels)
-	xlabel!(plt,"Discovery Year")
-	ylabel!(plt,L"\log_{10} (m \, \sin\, i / (M_⊕))")
-	
-	if plot_low_density_points
-		mask_outside_contours = calc_mask_points_outside_kde_contour(kde_to_plt, x, y, threshold_for_plotting_points )
-		
-		scatter!(plt, x[mask_outside_contours], y[mask_outside_contours], markersize=2, label=:none)
-	end
-	plt
-end
 
 # ╔═╡ d4fda974-6856-4cd6-9367-fea74d7dbc1a
 md"""
@@ -477,6 +334,151 @@ ChooseDisplayMode()
 # ╔═╡ c9b03ce0-257e-4ab6-9839-29c317477599
 md"Specify the packages that we'll be using in this notebook.  And load some helper functions from `src/Lab2.jl`"
 
+# ╔═╡ 835ee2f2-c555-47e3-9903-5d374ddcaa72
+begin # This lab uses some code in a module in the lab2 repository
+	M = @ingredients("src/Lab2.jl")
+	import .M.Lab2: make_tap_query_url, get_cols_containing_string, get_cols_containing_real, calc_mask_points_outside_kde_contour
+end
+
+# ╔═╡ 4be2fe02-bc08-47bd-a852-9c0d64a23c95
+begin 
+	query_base_url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query="
+	query_table = "ps"
+	url_to_download_all_data = make_tap_query_url(query_base_url,query_table)
+end
+
+# ╔═╡ 1d05aba8-d1e4-40d9-91d0-10a1fbdf4e75
+begin
+	query_where = "default_flag=1"
+	query_max_rows = 10_000
+	url_to_use = make_tap_query_url(query_base_url, query_table, where=query_where, max_rows=query_max_rows)
+end
+
+# ╔═╡ 5388ed2b-0ada-46a5-aa3f-9da522a747c2
+begin
+	if !isfile(datapath) || filesize(datapath)==0
+		Downloads.download(url_to_use, datapath)
+		fresh_data = true
+	else
+		fresh_data = false
+	end
+	@test filesize(datapath) >0	
+end
+
+# ╔═╡ 5dbf2319-668f-460d-8bf6-f66a5c0c64eb
+begin
+	fresh_data
+	df_raw = CSV.read(datapath,DataFrame)
+end
+
+# ╔═╡ 5a5fed8b-84b1-46ea-8e6c-cb18e0c40a8b
+describe(df_raw)
+
+# ╔═╡ de7a6cf0-a096-45ca-b11d-da38dd6ffe34
+ncol(df_raw)
+
+# ╔═╡ 37b74f19-b8e1-441e-bd4f-703a446103ee
+begin 
+	valid_year(x) = 1900 <= x <= 2100
+	valid_month(x) = 1 <= x <= 12
+	rows_with_invalid_month = findall(map(d->!valid_year(parse(Int,d[1:4])) || !valid_month(parse(Int,d[6:7])),df_raw.pl_pubdate))
+	df_raw.pl_pubdate[rows_with_invalid_month]
+end
+
+# ╔═╡ ffdb5655-d778-4d71-9ec5-8805edcb0c55
+begin 
+	# Create new Dataframe that eliminates columns that have names ending in "str" 
+	colnames_ending_in_str = filter(x->contains(x,r"str$"), names(df_raw) )
+	df = select(df_raw,Not(Symbol.(colnames_ending_in_str)))
+	
+	# Convert columns containing HTML into HTML
+	df.sy_refname = HTML.(df.sy_refname)
+	df.disc_refname = HTML.(df.disc_refname)
+	df.pl_refname = HTML.(df.pl_refname)
+	df
+end
+
+# ╔═╡ d6eeb880-db23-4412-a2fd-232627088ea2
+HTML(df.pl_refname[1])
+
+# ╔═╡ 0589b771-04b3-4b1a-949f-8daf99c9d616
+begin
+	cols_to_summarize = [:disc_year,:pl_orbper,:pl_rvamp, :pl_orbeccen,:pl_masse,:pl_rade,:pl_dens]
+	describe(df,cols=cols_to_summarize)
+end
+
+# ╔═╡ 8f9c3263-3baf-4ee9-a9e1-1c00b0b3450e
+histogram(df.disc_year, xlabel="Year", ylabel="Number", legend=:none)
+
+# ╔═╡ 1933369e-a441-4ccd-8ae2-114224fce43d
+md"""
+As another example, we could plot a histogram of the mass of the planet times the sine of the inclination of its orbit relative to the sky plane.  
+The values vary over a large range ($(extrema(skipmissing(df.pl_msinie)))), so it's useful to take their logarithm before plotting.
+"""
+
+# ╔═╡ 2f4b3656-066f-466f-a8ba-c6f2d20d2d32
+if !ismissing(response_2c) 
+	let
+	number_of_bins = 5
+	vals = collect(skipmissing(log10.(df.pl_msinie)))
+	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="Count", legend=:none)
+	histogram!(plt, vals, nbins=number_of_bins)
+	xlims!(-1,5)
+	end
+end
+
+# ╔═╡ 68ee5d0c-613b-4cb1-923b-98aba36e26df
+let
+	vals = collect(skipmissing(log10.(df.pl_msinie)))
+	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="Count", legend=:none)
+	density!(plt, vals)
+	xlims!(-1,5)
+end
+
+# ╔═╡ b0dfadf6-eba5-447d-b5f6-1e8966d6835a
+let
+	plt = plot(xlabel=L"m\, sin(i)\; (M_{\oplus})", ylabel="CDF" )
+	plot!(plt,ecdf(log10.(skipmissing(df.pl_msinie))), label=:none)
+	xlims!(-1,5)
+end
+
+# ╔═╡ aaeff910-09a4-47ad-97b9-b8c9e5311449
+let
+	mask = .!(ismissing.(df.disc_year) .|| ismissing.(df.pl_msinie))
+	plt = plot(xlabel="Discovery Year", ylabel="m sin i (M_⊕)", yscale=:log10, legend=:none)
+	scatter!(plt,df[mask,:disc_year],df[mask,:pl_msinie])
+end
+
+# ╔═╡ 927a5200-0e40-4bab-b868-c0da64ca9f30
+describe(df_raw, cols=get_cols_containing_real(df_raw) )
+
+# ╔═╡ 95883e0a-7a7e-4171-a4bf-ac86619d5abe
+describe(df_raw, :first, :last, :nmissing, :nunique, cols=get_cols_containing_string(df_raw) )
+
+# ╔═╡ 673effd7-03e5-4bca-af5e-49e39aec14f4
+let
+	number_of_contour_levels = 10
+	bandwidth_x = 1
+	bandwidth_y = 0.3
+	plot_low_density_points = true
+	threshold_for_plotting_points = 2/number_of_contour_levels
+	
+	mask = .!(ismissing.(df.disc_year) .|| ismissing.(df.pl_msinie))
+	x = collect(skipmissing(df[mask,:disc_year]))
+	y = log10.(collect(skipmissing(df[mask,:pl_msinie])))
+	kde_to_plt = kde((x,y), bandwidth=(bandwidth_x, bandwidth_y) )
+	plt = plot(kde_to_plt, levels=number_of_contour_levels)
+	xlabel!(plt,"Discovery Year")
+	ylabel!(plt,L"\log_{10} (m \, \sin\, i / (M_⊕))")
+	
+	if plot_low_density_points
+		mask_outside_contours = calc_mask_points_outside_kde_contour(kde_to_plt, x, y, threshold_for_plotting_points )
+		
+		scatter!(plt, x[mask_outside_contours], y[mask_outside_contours], markersize=2, label=:none)
+	end
+	plt
+end
+
 # ╔═╡ 18c61599-5661-42b4-91e3-57e3e138c344
 TableOfContents()
 
@@ -509,7 +511,7 @@ HypertextLiteral = "~0.9.4"
 KernelDensity = "~0.6.5"
 LaTeXStrings = "~1.3.0"
 Plots = "~1.31.7"
-PlutoTeachingTools = "~0.1.5"
+PlutoTeachingTools = "~0.1.7"
 PlutoTest = "~0.2.2"
 PlutoUI = "~0.7.39"
 StatsBase = "~0.33.21"
@@ -1298,10 +1300,10 @@ uuid = "0ff47ea0-7a50-410d-8455-4348d5de0420"
 version = "0.1.5"
 
 [[deps.PlutoTeachingTools]]
-deps = ["HypertextLiteral", "LaTeXStrings", "Markdown", "PlutoLinks", "PlutoUI", "Random"]
-git-tree-sha1 = "7aa8eef291dbb46aba4aab7fc3895d540a4725d8"
+deps = ["Downloads", "HypertextLiteral", "LaTeXStrings", "Latexify", "Markdown", "PlutoLinks", "PlutoUI", "Random"]
+git-tree-sha1 = "67c917d383c783aeadd25babad6625b834294b30"
 uuid = "661c6b06-c737-4d37-b85c-46df65de6f69"
-version = "0.1.5"
+version = "0.1.7"
 
 [[deps.PlutoTest]]
 deps = ["HypertextLiteral", "InteractiveUtils", "Markdown", "Test"]
@@ -1821,6 +1823,7 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╟─be1b6155-27ae-4d76-8be4-f24f7acb4c6c
+# ╟─18c61599-5661-42b4-91e3-57e3e138c344
 # ╟─3824b927-bab7-4499-8ec8-7bfc2ac51a20
 # ╟─dfd5870a-d3fd-43cf-afef-a46972093e30
 # ╠═4be2fe02-bc08-47bd-a852-9c0d64a23c95
@@ -1893,7 +1896,7 @@ version = "1.4.1+0"
 # ╠═0ca4a72e-fb40-4c85-b0fc-9b1f2a255851
 # ╟─c9b03ce0-257e-4ab6-9839-29c317477599
 # ╠═934edba8-f75e-11ec-3a51-c9cea77ac88e
-# ╠═18c61599-5661-42b4-91e3-57e3e138c344
+# ╠═835ee2f2-c555-47e3-9903-5d374ddcaa72
 # ╟─f6ba230a-6e4d-414c-b828-0bf0311013b2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
