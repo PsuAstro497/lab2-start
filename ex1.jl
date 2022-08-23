@@ -103,7 +103,7 @@ md"""
 Wow, that's a lot of columns.
 Some statistics (e.g., mean) don't make sense if the variable is a string (e.g., the planet's name).  
 So it's often useful to separate out those columns that contain some kind of strings and those that contain some kind of value.  
-I've provided some helper functions (`get_cols_containing_string` and `get_cols_containing_string`) to make that easy.  
+I've provided some helper functions (`get_cols_containing_real` and `get_cols_containing_string`) to make that easy.  
 (You can refer to that code later if it would be helpful, but you don't need to be distracted by the syntax now.)
 Then, we can call `describe` specifying which columns we'd like it to focus on and which summary statistics we'd like it to compute for each subset of columns.
 """
