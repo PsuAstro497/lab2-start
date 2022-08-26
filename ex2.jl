@@ -114,7 +114,7 @@ response_1d = missing
 
 # ╔═╡ e0063231-083c-4c3f-932e-b2ecfb2861a9
 md"""
-**Q1e:** Which discovery method(s) typically result in a measurement of the orbital period?
+**Q1e:** Which discovery method(s) typically result in a measurement of the orbital eccentricity?
 """
 
 # ╔═╡ a8923155-10e2-4446-9498-0171f6e4f154
